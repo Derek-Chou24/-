@@ -7,6 +7,7 @@ import math
 # source_name = "1.JPG"  # 第一张照片（用于创建所有同学的面部信息库）
 # new = ['2.JPG', '3.JPG']  # 后续会添加的照片（用于补充面部信息库）
 # sign_image = '3.JPG'  # 用于签到的照片
+
 source_name = "person1.JPG"  # 第一张照片（用于创建所有同学的面部信息库）
 new = ['person2.JPG', 'person3.JPG', 'person4.JPG', 'person5.JPG']  # 后续会添加的照片（用于补充面部信息库）
 sign_image = 'test1.JPG'  # 用于签到的照片
