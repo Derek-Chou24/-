@@ -93,7 +93,7 @@ def sign_in(sign_image, list_of_face_encodings, total_num):
 
 
 # 这里是想把所有缺席同学照片显示到一张图上
-def printabsent(absent_list):
+def print_absent(absent_list):
     absent_num = len(absent_list)
     if absent_num > 0:
         rowNum = math.ceil(absent_num**0.5)
@@ -124,4 +124,4 @@ def printabsent(absent_list):
 
 numbers, encodings = build_set(new, image)
 absent_list = sign_in(sign_image, encodings, numbers)
-printabsent(absent_list)
+print_absent(absent_list)
