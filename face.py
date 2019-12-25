@@ -1,16 +1,12 @@
+import math
 import face_recognition
 from PIL import Image
 import numpy as np
 import cv2 as cv
-import math
 
-# source_name = "1.JPG"  # 第一张照片（用于创建所有同学的面部信息库）
-# new = ['2.JPG', '3.JPG']  # 后续会添加的照片（用于补充面部信息库）
-# sign_image = '3.JPG'  # 用于签到的照片
-
-source_name = "person1.JPG"  # 第一张照片（用于创建所有同学的面部信息库）
-new = ['person2.JPG', 'person3.JPG', 'person4.JPG', 'person5.JPG']  # 后续会添加的照片（用于补充面部信息库）
-sign_image = 'test1.JPG'  # 用于签到的照片
+source_name = "1.JPG"  # 第一张照片（用于创建所有同学的面部信息库）
+new = ["2.JPG", "3.JPG", ]  # 后续会添加的照片（用于补充面部信息库）
+sign_image = 'test.JPG'  # 用于签到的照片
 
 image = face_recognition.load_image_file(source_name)
 
@@ -20,7 +16,6 @@ image = face_recognition.load_image_file(source_name)
 def build_set(new, image):
     # 查找面部
     face_locations = face_recognition.face_locations(image)
-
     # 总人数
     num = len(face_locations)
     img = Image.open(source_name)
@@ -28,16 +23,13 @@ def build_set(new, image):
         # 开始截取
         region = img.crop((face_locations[i][3], face_locations[i][0], face_locations[i][1], face_locations[i][2]))
         # 保存图片
-        region.save('No' + str(i) + '.PNG')
-
+        region.save('Student' + str(i) + '.PNG')
     # 查找面部编码
     list_of_face_encodings = face_recognition.face_encodings(image)
-
     for new_image in new:
         image2 = face_recognition.load_image_file(new_image)
         encoding2 = face_recognition.face_encodings(image2)
         locations2 = face_recognition.face_locations(image2)
-
         # 新图和原有列表作对比
         for i in range(len(encoding2)):
             ifsame = face_recognition.compare_faces(list_of_face_encodings, encoding2[i], tolerance=0.4)
@@ -49,7 +41,7 @@ def build_set(new, image):
                 img2 = Image.open(new_image)
                 region2 = img2.crop((locations2[i][3], locations2[i][0], locations2[i][1], locations2[i][2]))
                 # 保存图片
-                region2.save('No' + str(num - 1) + '.PNG')
+                region2.save('Student' + str(num - 1) + '.PNG')
     return num, list_of_face_encodings
 
 
@@ -59,6 +51,8 @@ def sign_in(sign_image, list_of_face_encodings, total_num):
     sign_locations = face_recognition.face_locations(sign_image_array)
     sign_encodings = face_recognition.face_encodings(sign_image_array)
     sign_list = np.zeros(total_num)
+    im = cv.imread(sign_image)
+    num_new = 0
     for p in range(len(sign_encodings)):
         ifsame1 = face_recognition.compare_faces(list_of_face_encodings, sign_encodings[p], tolerance=0.6)
         face_dis = face_recognition.face_distance(list_of_face_encodings, sign_encodings[p])
@@ -67,7 +61,17 @@ def sign_in(sign_image, list_of_face_encodings, total_num):
             region3 = img3.crop(
                 (sign_locations[p][3], sign_locations[p][0], sign_locations[p][1], sign_locations[p][2]))
             # 保存图片
-            region3.save('No' + str(p) + 'new.PNG')
+            cv.rectangle(im, (sign_locations[p][3], sign_locations[p][0]), (sign_locations[p][1], sign_locations[p][2]),
+                         (0, 255, 0), 3)
+            p_name1 = '新同学'
+            if (sign_locations[p][0] > 10):
+                cv.putText(im, p_name1, (sign_locations[p][3], sign_locations[p][0] - 6), cv.FONT_HERSHEY_COMPLEX_SMALL,
+                           0.8, (0, 255, 0))
+            else:
+                cv.putText(im, p_name1, (sign_locations[p][3], sign_locations[p][0] + 15),
+                           cv.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0, 255, 0))
+            region3.save('Student' + str(num_new) + 'new.PNG')
+            num_new = num_new + 1
 
         else:  # 如果此人出现过，找出与此人面部编码欧氏距离最近的一个签到
             min_dis = 10
@@ -77,8 +81,22 @@ def sign_in(sign_image, list_of_face_encodings, total_num):
             for k in range(len(ifsame1)):
                 if (min_dis == face_dis[k]):
                     sign_list[k] = 1
+                    cv.rectangle(im, (sign_locations[p][3], sign_locations[p][0]),
+                                 (sign_locations[p][1], sign_locations[p][2]), (0, 255, 0), 3)
+                    p_name2 = 'Student' + str(k)
+                    if (sign_locations[p][0] > 10):
+                        cv.putText(im, p_name2, (sign_locations[p][3], sign_locations[p][0] - 6),
+                                   cv.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0, 255, 0))
+                    else:
+                        cv.putText(im, p_name2, (sign_locations[p][3], sign_locations[p][0] + 15),
+                                   cv.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0, 255, 0))
+    cv.namedWindow('result', 0)
+    cv.imshow('result', im)
     is_empty = 1
+    print('应到' + str(len(list_of_face_encodings)) + '人')
+    print('实到' + str(len(sign_encodings)) + '人')
     list_notin = []
+
     for n in range(len(sign_list)):
         if sign_list[n] == 0 and is_empty == 1:
             list_notin.append(n)
@@ -88,7 +106,6 @@ def sign_in(sign_image, list_of_face_encodings, total_num):
         if sign_list[n] == 0 and is_empty == 0:
             list_notin.append(n)
             print(str(n) + "号同学缺席")
-
     return list_notin
 
 
@@ -96,15 +113,15 @@ def sign_in(sign_image, list_of_face_encodings, total_num):
 def print_absent(absent_list):
     absent_num = len(absent_list)
     if absent_num > 0:
-        rowNum = math.ceil(absent_num**0.5)
+        rowNum = math.ceil(absent_num ** 0.5)
         row_img = []
         index = 0
-        colNum = math.ceil(absent_num/rowNum)
+        colNum = math.ceil(absent_num / rowNum)
         for n in range(colNum):
             img_list = []
             for i in range(rowNum):
                 if index in range(len(absent_list)):
-                    img = cv.imread('No' + str(absent_list[index])+'.PNG')
+                    img = cv.imread('Student' + str(absent_list[index]) + '.PNG')
                     new_img = cv.resize(img, (100, 100))
                     img_list.append(new_img)
                     index += 1
@@ -112,12 +129,11 @@ def print_absent(absent_list):
                     img = np.zeros((100, 100, 3), np.uint8)
                     img_list.append(img)
             row_img.append(cv.hconcat(img_list))
-
         if colNum != 1:
             final_img = cv.vconcat(row_img)
         else:
             final_img = row_img[0]
-        cv.imshow("缺席同学照片", final_img)
+        cv.imshow("Who is absent?", final_img)
         cv.waitKey(0)
         cv.destroyAllWindows()
 
