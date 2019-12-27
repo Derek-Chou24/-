@@ -21,7 +21,6 @@ source_name = "person1.JPG"  # 第一张照片（用于创建所有同学的面�
 new = []  # 后续会添加的照片（用于补充面部信息库）
 sign_image = '2222.JPG'  # 用于签到的照片
 
-
 image = face_recognition.load_image_file(source_name)
 
 
